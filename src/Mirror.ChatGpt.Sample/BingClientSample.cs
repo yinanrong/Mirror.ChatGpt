@@ -11,9 +11,9 @@ internal class BingClientSample
         //just show debug message. If you want to trace or diagnose your conversation please remove this comments
         //services.AddLogging(x => { x.AddConsole(); });
 
-        const string token = "xxx"; //Cookie of Microsoft account which named _U
+        const string token = ""; //Cookie of Microsoft account which named _U
         //Register services
-        services.AddBingClient(new() {Token = token});
+        services.AddBingClient(new() { Token = token });
         var app = services.BuildServiceProvider();
 
         var service = app.GetRequiredService<BingClient>();
@@ -26,7 +26,7 @@ internal class BingClientSample
             if (e.End)
                 Console.WriteLine("-------------------------------");
         };
-
+        var invocationId = 0;
         Console.WriteLine("Let's start，input 'exit' to escape");
         do
         {
@@ -42,8 +42,11 @@ internal class BingClientSample
             chatCts.CancelAfter(TimeSpan.FromMinutes(5));
 
             //This method will return final message
-            var res = await service.ChatAsync(new(text), chatCts.Token);
-
+            var res = await service.ChatAsync(new(text)
+            {
+                InvocationId = invocationId
+            }, chatCts.Token);
+            invocationId = res.InvocationId;
             Console.WriteLine();
             if (res.Success)
                 Console.WriteLine($"[finally:{res.Text}]");
