@@ -1,6 +1,8 @@
 # Mirror.ChatGPT
 
-This project provides official API for ChatGPT and unofficial API for Bing chat in C# language. The project is built using WebClient and ClientWebSocket. It requires .NET 6 or above. The license is Apache 2.0.
+This project provides official API for ChatGPT and unofficial API for Bing chat in C# language. It requires .NET 6 or above. The license is Apache 2.0.
+
+Bing chat is free
 
 ## Usage
 
