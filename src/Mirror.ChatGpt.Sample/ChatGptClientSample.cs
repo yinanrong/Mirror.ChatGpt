@@ -18,41 +18,53 @@ internal class ChatGptClientSample
         {
             ApiKey = "",//Your api key from OpenAI
             Organization = "",//Your organization from OpenAi,optional
-            Proxy = "http://127.0.0.1:8888" //proxy address,optional
+            Proxy = "http://127.0.0.1:7890" //proxy address,optional
         });
         var app = services.BuildServiceProvider();
 
         var service = app.GetRequiredService<ChatGptClient>();
-
-        var res = await service.ChatAsync(new ChatCompletionRequest
+        ChatCompletionRequest request = new()
         {
+            Stream = true, //receive realtime message
             Model = "gpt-3.5-turbo", //model name,required. only gpt-3.5-turbo or gpt-3.5-turbo-0301 can be chosen now
             Messages = //message list
                 new[]
-            {
-                 new MessageEntry
-                 {
-                     Role = Roles.System,
-                     Content = "You are a helpful assistant."
-                 },
-                 new MessageEntry
-                 {
-                     Role = Roles.User,
-                     Content = "Who won the world series in 2020?"
-                 },
-                 new MessageEntry
-                 {
-                     Role = Roles.Assistant,
-                     Content = "The Los Angeles Dodgers won the World Series in 2020."
-                 },
-                 new MessageEntry
-                 {
-                     Role = Roles.User,
-                     Content = "Where was it played?"
-                 }
-         }
-        }, default);
+                {
+                    new MessageEntry
+                    {
+                        Role = Roles.System,
+                        Content = "You are a helpful assistant."
+                    },
+                    new MessageEntry
+                    {
+                        Role = Roles.User,
+                        Content = "Who won the world series in 2020?"
+                    },
+                    new MessageEntry
+                    {
+                        Role = Roles.Assistant,
+                        Content = "The Los Angeles Dodgers won the World Series in 2020."
+                    },
+                    new MessageEntry
+                    {
+                        Role = Roles.User,
+                        Content = "Where was it played?"
+                    }
+                }
+        };
 
-        Console.WriteLine(res.Choices[0].Message.Content);
+        if (request.Stream==true)
+            service.MessageReceived += (send, e) =>
+            {
+                Console.Write(e.Text);
+                if (e.End)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("-------------------------------");
+                }
+            };
+        var res = await service.ChatAsync(request, default);
+
+        Console.WriteLine($"final:{res.Choices[0].Message.Content}");
     }
 }

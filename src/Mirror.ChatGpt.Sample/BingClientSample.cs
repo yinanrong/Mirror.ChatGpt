@@ -21,7 +21,7 @@ internal class BingClientSample
         var app = services.BuildServiceProvider();
 
         var service = app.GetRequiredService<BingClient>();
-        //Use this event to Receive real time message
+        //Use this event to Receive realtime message
         service.MessageReceived += (sender, e) =>
         {
             if (e.Begin)
