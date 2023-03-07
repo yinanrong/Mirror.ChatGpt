@@ -2,7 +2,12 @@
 
 This project provides official API for ChatGPT and unofficial API for Bing chat in C# language. It requires .NET 6 or above. The license is Apache 2.0.
 
-Bing chat is free
+## Installation
+[You can search package from Nuget by name **Mirror.ChatGpt**](https://www.nuget.org/packages/Mirror.ChatGpt/)
+or use following script
+``` pwsh
+dotnet add package Mirror.ChatGpt
+```
 
 ## Usage
 
@@ -63,7 +68,8 @@ Note that you must pass back the content of each conversation to the Messages ob
 
     var res = await service.ChatAsync(new ChatCompletionRequest
     {
-        Model = "gpt-3.5-turbo", //model name,required. only gpt-3.5-turbo or gpt-3.5-turbo-0301 can be chosen now
+        Model = "gpt-3.5-turbo", //model name,required. only gpt-3.5-turbo   
+        //or gpt-3.5-turbo-0301 can be chosen now
         Messages = //message list
             new[]
         {
@@ -117,8 +123,7 @@ Note that you must pass back the content of each conversation to the Messages ob
 ##### [More usage click here](src/Mirror.ChatGpt.Sample)
 
 ## Contributing
-Contributions are welcome! If you think Mirror.ChatGPT is useful, please give me a star.
-You can also vist https://xfbmx.cn for more information.
-
+Contributions are welcome! If you think Mirror.ChatGPT is useful, please give me a star.  
+You can also vist https://xfbmx.cn for more information.  
 ## License
 Mirror.ChatGPT is released under the Apache 2.0 license. For more information, see the [LICENSE](./LICENSE) file.
