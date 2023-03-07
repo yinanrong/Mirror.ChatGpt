@@ -12,12 +12,11 @@ internal class BingClientSample
         //just show debug message. If you want to trace or diagnose your conversation please remove this comments
         //services.AddLogging(x => { x.AddConsole(); });
 
-        const string token = "1QK2gLa7Q-YQtTYcxBoH3bhZ35nxoGrEflDcJwEe_hemTGIKfEfDpYoKUJjTQo6f2l0uleSDFCZOBoP5xVU6S7PRU9aHfavdeeBb7fIhGp0TGXOwh32M2WPRBURkPzHl-JLlTipltujiIkJerVSPSjqnJKQOm9PKGrBmk-nVPKvmycaUb6IpJKKDNulJG-ZcezDq7b1XXqyLfodg69CxX2A"; //Cookie of Microsoft account which named _U
+        const string token = ""; //Cookie of Microsoft account which named _U
         //Register services
         services.AddBingClient(new()
         {
-            Token = token,
-            Proxy = "http://127.0.0.1:8888"
+            Token = token
         });
         var app = services.BuildServiceProvider();
 
@@ -36,7 +35,8 @@ internal class BingClientSample
         };
         var invocationId = 0;
         const int maxConversationCount = 6;
-        Console.WriteLine("System :Let's start,input 'exit' to escape and 'reset' to create a new conversation");
+        Console.WriteLine("Let's start,input 'exit' to escape and 'reset' to create a new conversation");
+        Console.WriteLine();
         do
         {
             Console.WriteLine("-------------------------------");
