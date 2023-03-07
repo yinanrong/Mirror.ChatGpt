@@ -5,11 +5,7 @@ public record ChatRequest(string Text)
     public int InvocationId { get; set; }
 }
 
-public record ChatResponse(bool Success, string Text = default)
-{
-    public int InvocationId { get; set; }
-}
-
+public record ChatResponse(int InvocationId, string Text = default);
 public record ChatPressResponse(bool Begin, bool End, string Text);
 
 internal class ChatExtension
