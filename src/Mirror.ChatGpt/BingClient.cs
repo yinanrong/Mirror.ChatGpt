@@ -1,5 +1,6 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Mirror.ChatGpt.Models.Bing;
 using Newtonsoft.Json;
@@ -22,6 +23,7 @@ public class BingClient
         _httpClientFactory = httpClientFactory;
         _serializerSettings = new()
         {
+            Formatting = Formatting.None,
             ContractResolver = new CamelCasePropertyNamesContractResolver()
         };
         _extension = new();
@@ -49,20 +51,37 @@ public class BingClient
                 new(request.Text))
         });
         using var ws = await CreateConnectionAsync(cancellationToken);
-        var heartBeatCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        _ = HeartBeatAsync(ws, heartBeatCts.Token);
         await HandshakeAsync(ws, cancellationToken);
-        var jsonMessage = JsonConvert.SerializeObject(chatRequest, _serializerSettings);
-        var bytesMessage = Encoding.UTF8.GetBytes(jsonMessage);
-        await ws.SendAsync(bytesMessage, WebSocketMessageType.Text, true, cancellationToken);
+        await SendMessageAsync(ws, chatRequest, cancellationToken);
         var res = await ReceiveAsync(ws, cancellationToken);
-        heartBeatCts.Cancel(false);
-        if (res.Success)
-            res.InvocationId = request.InvocationId++;
-        return res;
+        var invocationId = res == null ? 0 : request.InvocationId+1;
+        return new(invocationId, res);
     }
 
-    private async Task<ChatResponse> ReceiveAsync(WebSocket ws, CancellationToken cancellationToken)
+    private async Task HandshakeAsync(WebSocket ws, CancellationToken cancellationToken)
+    {
+        _logger.LogDebug("performing handshake...");
+        await SendMessageAsync(ws, new
+        {
+            protocol = "json",
+            version = 1
+        }, cancellationToken);
+        var res = await ReceiveAsync(ws, cancellationToken);
+        if (res == "{}")
+        {
+            _logger.LogDebug("handshake established");
+            await SendMessageAsync(ws, new
+            {
+                type = 6
+            }, cancellationToken);
+            _logger.LogDebug("heart beat message sent");
+            return;
+        }
+
+        throw new($"handshake error:{res}");
+    }
+
+    private async Task<string> ReceiveAsync(WebSocket ws, CancellationToken cancellationToken)
     {
         var lastText = "";
         var i = 0;
@@ -85,49 +104,54 @@ public class BingClient
                 continue;
             var responseMsg = objects[0];
             _logger.LogDebug($"receiving general message:{responseMsg}");
-            var response = JsonConvert.DeserializeObject<InternalChatResponse>(responseMsg);
-            if (response is not { Type: 1, Arguments.Count: > 0 } || response.Arguments[0] is not { Messages.Count: > 0 })
-                continue;
-            var message = response.Arguments[0].Messages[0];
-            if (message.Author != "bot" || string.IsNullOrEmpty(message.Text))
-                return new(false);
-            var thisText = message.Text.Length >= lastText.Length ? message.Text[lastText.Length..] : message.Text;
-            lastText = message.Text;
-            var init = i++ <= 0;
-            var end = thisText == "" || thisText.EndsWith("\uD83D\uDE0A\n");
-            MessageReceived?.Invoke(this, new(init, end, thisText));
-            if (end)
+            var response = JsonConvert.DeserializeObject<InternalChatResponse>(responseMsg)!;
+            switch (response.Type)
             {
-                _logger.LogDebug("receiving text message successfully");
-                return new(true, message.Text);
+                case 1:
+                    if (response is not { Arguments.Count: > 0 } || response.Arguments[0] is not { Messages.Count: > 0 })
+                        continue;
+                    var message = response.Arguments[0].Messages[0];
+                    if (message.Author != "bot" || string.IsNullOrEmpty(message.Text))
+                        continue;
+                    message.Text = Regex
+                        .Replace(message.Text, @"\[[^\]]+\]", "", RegexOptions.Compiled|RegexOptions.Multiline)
+                        .Replace("\ud83d\ude0a","");
+                    var thisText = message.Text.Length >= lastText.Length
+                        ? message.Text[lastText.Length..]
+                        : message.Text;
+                    lastText = message.Text;
+                    var init = i++ <= 0;
+                    var end = thisText == "";
+                    MessageReceived?.Invoke(this, new(init, end, thisText));
+                    if (end)
+                    {
+                        _logger.LogDebug("receiving text message successfully");
+                        return string.IsNullOrEmpty(message.Text) ? lastText : message.Text;
+                    }
+                    break;
+                case 0:
+                    return responseMsg;
+                case 2:
+                    return null;
+                case 6:
+                    await SendMessageAsync(ws, new
+                    {
+                        type = 6
+                    }, cancellationToken);
+                    continue;
+                default:
+                    continue;
             }
         }
 
-        return new(false);
+        return null;
     }
 
-    private Task HeartBeatAsync(WebSocket ws, CancellationToken cancellationToken)
+    private async Task SendMessageAsync(WebSocket ws, object msg, CancellationToken cancellationToken)
     {
-        return Task.Run(async () =>
-        {
-            while (ws.State == WebSocketState.Open && !cancellationToken.IsCancellationRequested)
-            {
-                var bytes = Encoding.UTF8.GetBytes("{\"type\":6}\u001e");
-                await ws.SendAsync(new(bytes), WebSocketMessageType.Text,
-                    true, default);
-                _logger.LogDebug("heart beat message sent");
-                await Task.Delay(TimeSpan.FromSeconds(15), cancellationToken);
-            }
-        }, cancellationToken);
-    }
-
-    private async Task HandshakeAsync(WebSocket ws, CancellationToken cancellationToken)
-    {
-        _logger.LogDebug("performing handshake...");
-        var handshakeBytes = Encoding.UTF8.GetBytes("{\"protocol\":\"json\",\"version\":1}\u001e");
-        await ws.SendAsync(handshakeBytes, WebSocketMessageType.Text, true,
-            cancellationToken);
-        _logger.LogDebug("handshake established");
+        var jsonMessage = JsonConvert.SerializeObject(msg, _serializerSettings) + "\u001e";
+        var bytesMessage = Encoding.UTF8.GetBytes(jsonMessage);
+        await ws.SendAsync(bytesMessage, WebSocketMessageType.Text, true, cancellationToken);
     }
 
     private async Task<WebSocket> CreateConnectionAsync(CancellationToken cancellationToken)
