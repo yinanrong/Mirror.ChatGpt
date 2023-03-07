@@ -93,6 +93,27 @@ Note that you must pass back the content of each conversation to the Messages ob
     Console.WriteLine(res.Choices[0].Message.Content);
 }
 ```
+#### receive real time message
+``` c#
+    //To use real time message,you must pass true to request params like :
+    //  ChatCompletionRequest request = new()
+    //  {
+    //      Stream = true,
+    //      Model = "gpt-3.5-turbo",
+    //      Messages = ...
+    //  }
+    
+    if (request.Stream==true)
+        service.MessageReceived += (send, e) =>
+        {
+            Console.Write(e.Text);
+            if (e.End)
+            {
+                Console.WriteLine();
+                Console.WriteLine("-------------------------------");
+            }
+        };
+ ```
 ##### [More usage click here](src/Mirror.ChatGpt.Sample)
 
 ## Contributing

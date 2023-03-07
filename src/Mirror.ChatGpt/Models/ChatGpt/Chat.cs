@@ -1,18 +1,19 @@
 ﻿using Newtonsoft.Json;
 
 namespace Mirror.ChatGpt.Models.ChatGpt;
-
+public record ChatPressResponse(bool Begin, bool End, string Text);
 public class ChatCompletionRequest
 {
     public ChatCompletionRequest()
     {
-
     }
+
     public ChatCompletionRequest(string model, MessageEntry[] messages)
     {
-        Model=model;
+        Model = model;
         Messages = messages;
     }
+
     public string Model { get; set; }
     public MessageEntry[] Messages { get; set; }
 
@@ -63,13 +64,20 @@ public class ChatCompletionResponse
     public string Object { get; set; }
     public int Created { get; set; }
     public Choice[] Choices { get; set; }
+
+    [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
     public UsageEntry Usage { get; set; }
 
 
     public class Choice
     {
         public int Index { get; set; }
+
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
         public MessageEntry Message { get; set; }
+
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
+        public MessageEntry Delta { get; set; }
 
         [JsonProperty("finish_reason")] public string FinishReason { get; set; }
     }
