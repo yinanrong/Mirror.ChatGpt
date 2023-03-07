@@ -114,8 +114,7 @@ public class BingClient
                     if (message.Author != "bot" || string.IsNullOrEmpty(message.Text))
                         continue;
                     message.Text = Regex
-                        .Replace(message.Text, @"\[[^\]]+\]", "", RegexOptions.Compiled|RegexOptions.Multiline)
-                        .Replace("\ud83d\ude0a","");
+                        .Replace(message.Text, @"\[[^\]]+\]", "", RegexOptions.Compiled|RegexOptions.Multiline);
                     var thisText = message.Text.Length >= lastText.Length
                         ? message.Text[lastText.Length..]
                         : message.Text;
