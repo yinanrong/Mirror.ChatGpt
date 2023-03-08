@@ -2,6 +2,8 @@
 
 This project provides official API for ChatGPT and unofficial API for Bing chat in C# language. It requires .NET 6 or above. The license is Apache 2.0.
 
+![chat.png](./resources/chat.png)
+
 ## Installation
 [You can search package from Nuget by name **Mirror.ChatGpt**](https://www.nuget.org/packages/Mirror.ChatGpt/)
 or use following script
