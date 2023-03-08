@@ -2,19 +2,13 @@
 
 public record ChatRequest(string Text)
 {
-    public int InvocationId { get; set; }
+    public ChatExtension ChatExtension { get; set; }
 }
 
-public record ChatResponse(int InvocationId, string Text = default);
+public record ChatResponse(string Text, ChatExtension ChatExtension);
+
+public record ChatExtension(int InvocationId, string ConversationId, string ClientId, string ConversationSignature);
 public record ChatPressResponse(bool Begin, bool End, string Text);
-
-internal class ChatExtension
-{
-    public string ConversationId { get; set; }
-    public string ClientId { get; set; }
-    public string ConversationSignature { get; set; }
-}
-
 internal record InternalChatRequest(string InvocationId, List<InternalChatRequest.Argument> Arguments)
 {
     public string Target => "chat";

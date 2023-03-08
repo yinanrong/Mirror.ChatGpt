@@ -10,7 +10,6 @@ namespace Mirror.ChatGpt;
 
 public class BingClient
 {
-    private readonly ChatExtension _extension;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger _logger;
     private readonly BingClientOptions _options;
@@ -26,36 +25,35 @@ public class BingClient
             Formatting = Formatting.None,
             ContractResolver = new CamelCasePropertyNamesContractResolver()
         };
-        _extension = new();
     }
 
     public event EventHandler<ChatPressResponse> MessageReceived;
 
     public async Task<ChatResponse> ChatAsync(ChatRequest request, CancellationToken cancellationToken)
     {
-        var isStartOfSession = request.InvocationId <= 0;
+        var isStartOfSession = request.ChatExtension==null;
         if (isStartOfSession)
         {
             var conversation = await CreateConversationAsync(_options.Token, cancellationToken);
             if (conversation?.Result?.Value != "Success")
                 throw new($"create conversation error:{conversation?.Result?.Message}");
-            _extension.ConversationId = conversation.ConversationId;
-            _extension.ClientId = conversation.ClientId;
-            _extension.ConversationSignature = conversation.ConversationSignature;
+            request.ChatExtension = new(0, conversation.ConversationId, conversation.ClientId,
+                conversation.ConversationSignature);
+
         }
 
-        var chatRequest = new InternalChatRequest(request.InvocationId.ToString(), new()
+        var chatRequest = new InternalChatRequest(request.ChatExtension.InvocationId.ToString(), new()
         {
-            new(isStartOfSession, _extension.ConversationId,
-                _extension.ConversationSignature, new(_extension.ClientId),
+            new(isStartOfSession, request.ChatExtension.ConversationId,
+                request.ChatExtension.ConversationSignature, new(request.ChatExtension.ClientId),
                 new(request.Text))
         });
         using var ws = await CreateConnectionAsync(cancellationToken);
         await HandshakeAsync(ws, cancellationToken);
         await SendMessageAsync(ws, chatRequest, cancellationToken);
         var res = await ReceiveAsync(ws, cancellationToken);
-        var invocationId = res == null ? 0 : request.InvocationId+1;
-        return new(invocationId, res);
+        var invocationId = res == null ? 0 : request.ChatExtension.InvocationId+1;
+        return new(res, request.ChatExtension with { InvocationId = invocationId });
     }
 
     private async Task HandshakeAsync(WebSocket ws, CancellationToken cancellationToken)
