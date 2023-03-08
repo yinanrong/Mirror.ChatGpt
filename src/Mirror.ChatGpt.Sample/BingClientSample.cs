@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using Mirror.ChatGpt.Models.Bing;
 
 namespace Mirror.ChatGpt.Sample;
 
@@ -12,7 +12,7 @@ internal class BingClientSample
         //just show debug message. If you want to trace or diagnose your conversation please remove this comments
         //services.AddLogging(x => { x.AddConsole(); });
 
-        const string token = ""; //Cookie of Microsoft account which named _U
+        const string token = "1QK2gLa7Q-YQtTYcxBoH3bhZ35nxoGrEflDcJwEe_hemTGIKfEfDpYoKUJjTQo6f2l0uleSDFCZOBoP5xVU6S7PRU9aHfavdeeBb7fIhGp0TGXOwh32M2WPRBURkPzHl-JLlTipltujiIkJerVSPSjqnJKQOm9PKGrBmk-nVPKvmycaUb6IpJKKDNulJG-ZcezDq7b1XXqyLfodg69CxX2A"; //Cookie of Microsoft account which named _U
         //Register services
         services.AddBingClient(new()
         {
@@ -33,7 +33,7 @@ internal class BingClientSample
                 Console.WriteLine("-------------------------------");
             }
         };
-        var invocationId = 0;
+        ChatResponse response = null;
         const int maxConversationCount = 6;
         Console.WriteLine("Let's start,input 'exit' to escape and 'reset' to create a new conversation");
         Console.WriteLine();
@@ -42,39 +42,44 @@ internal class BingClientSample
             Console.WriteLine("-------------------------------");
             Console.Write($"[{DateTime.Now:HH:mm:ss} You] ");
             var text = Console.ReadLine();
-            if (text== "exit")
+            if (text == "exit")
                 break;
             if (text == "reset")
             {
-                invocationId = 0;
+                response = null;
                 Console.WriteLine($"[{DateTime.Now:HH:mm:ss} System]  Conversation reset.");
                 continue;
             }
+
             Console.WriteLine();
 
             var chatCts = new CancellationTokenSource();
             //Set timeout by CancellationTokenSource
             chatCts.CancelAfter(TimeSpan.FromMinutes(5));
 
+            ChatRequest request = new(text);
+            if (response is not null)
+                request.ChatExtension = response.ChatExtension;//Property ChatExtension used to hold conversation session 
+
             //This method will return final message
-            var res = await service.ChatAsync(new(text)
+            response = await service.ChatAsync(request, chatCts.Token);
+            var invocationId = response.ChatExtension.InvocationId;
+            if (response.ChatExtension.InvocationId == 0)
             {
-                InvocationId = invocationId
-            }, chatCts.Token);
-            invocationId = res.InvocationId;
-            if (invocationId == 0)
-            {
-                Console.WriteLine($"[{DateTime.Now:HH:mm:ss}System] Bing closed the conversation.");
+                Console.WriteLine();
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss} System] Bing closed the conversation.");
                 continue;
             }
+
             Console.WriteLine($"[{DateTime.Now:HH:mm:ss} System] The final-> {invocationId}/{maxConversationCount}");
-            Console.WriteLine($"<{res.Text}>");
+            Console.WriteLine($"<{response.Text}>");
             if (maxConversationCount <= invocationId)
             {
                 Console.WriteLine("-------------------------------");
-                Console.WriteLine($"[{DateTime.Now:HH:mm:ss}System] Conversation count limited,it will be reset at next one.");
+                Console.WriteLine(
+                    $"[{DateTime.Now:HH:mm:ss} System] Conversation count limited,it will be reset at next one.");
                 Console.WriteLine("-------------------------------");
-                invocationId = 0;
+                response = null;
             }
         } while (true);
     }
