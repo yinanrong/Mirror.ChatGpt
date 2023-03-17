@@ -8,7 +8,6 @@ public record ChatRequest(string Text)
 public record ChatResponse(string Text, ChatExtension ChatExtension);
 
 public record ChatExtension(int InvocationId, string ConversationId, string ClientId, string ConversationSignature);
-public record ChatPressResponse(bool Begin, bool End, string Text);
 internal record InternalChatRequest(string InvocationId, List<InternalChatRequest.Argument> Arguments)
 {
     public string Target => "chat";

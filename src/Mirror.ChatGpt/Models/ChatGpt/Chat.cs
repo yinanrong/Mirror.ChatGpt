@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json;
 
 namespace Mirror.ChatGpt.Models.ChatGpt;
-public record ChatPressResponse(bool Begin, bool End, string Text);
 public class ChatCompletionRequest
 {
     public ChatCompletionRequest()

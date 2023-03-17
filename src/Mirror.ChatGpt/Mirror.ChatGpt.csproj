@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Authors>Eval</Authors>
 	  <PackageProjectUrl>https://github.com/yinanrong/Mirror.ChatGpt</PackageProjectUrl>
-	  <Version>1.0.1</Version>
+	  <Version>1.0.2</Version>
 	  <Description>SDK for Bing Chat and ChatGPT api </Description>
   </PropertyGroup>
 

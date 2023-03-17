@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Mirror.ChatGpt.Models;
 using Mirror.ChatGpt.Models.ChatGpt;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;

@@ -1,7 +1,9 @@
-﻿using System.Net.WebSockets;
+﻿using System.Net;
+using System.Net.WebSockets;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
+using Mirror.ChatGpt.Models;
 using Mirror.ChatGpt.Models.Bing;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -155,6 +157,8 @@ public class BingClient
     {
         _logger.LogDebug("creating new connection...");
         var ws = new ClientWebSocket();
+        if (!string.IsNullOrEmpty(_options.Proxy))
+            ws.Options.Proxy = new WebProxy(_options.Proxy);
         var uri = new Uri("wss://sydney.bing.com/sydney/ChatHub");
         await ws.ConnectAsync(uri, cancellationToken);
         _logger.LogDebug("new connection created");

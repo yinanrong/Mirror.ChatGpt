@@ -9,7 +9,8 @@ public static class ServiceExtension
 {
     public static IServiceCollection AddChatGptClient(this IServiceCollection services, ChatGptClientOptions options)
     {
-        services.AddHttpClient("chatgpt").ConfigurePrimaryHttpMessageHandler(() =>
+        services.AddHttpClient("chatgpt",x=>x.Timeout=TimeSpan.FromSeconds(options.TimeoutSeconds))
+            .ConfigurePrimaryHttpMessageHandler(() =>
         {
             var handler = new HttpClientHandler();
             if (!string.IsNullOrEmpty(options.Proxy))
@@ -23,7 +24,8 @@ public static class ServiceExtension
 
     public static IServiceCollection AddBingClient(this IServiceCollection services, BingClientOptions options)
     {
-        services.AddHttpClient("bing").ConfigurePrimaryHttpMessageHandler(() =>
+        services.AddHttpClient("bing", x => x.Timeout=TimeSpan.FromSeconds(options.TimeoutSeconds))
+            .ConfigurePrimaryHttpMessageHandler(() =>
         {
             var handler = new HttpClientHandler();
             if (!string.IsNullOrEmpty(options.Proxy))
